@@ -10,7 +10,7 @@ use the selenium and phantomjs tools implements crawl tianyan companies datas an
  
   样例数据: 
            
-           ![2018-08-07-data-example1](./images/2018-08-08_092058.png)
+    ![2018-08-07-data-example1](./images/2018-08-08_092058.png)
   
-           ![2018-08-07-data-example2](./images/2018-08-08_092622.png)
+    ![2018-08-07-data-example2](./images/2018-08-08_092622.png)
 
