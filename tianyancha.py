@@ -39,10 +39,10 @@ class TianyanchaLogin(object):
                                                        # ('//*[@id = "web-content"]/div/div/div/div[2]/div/div[2]/div[2]/div[2]/div[2]/input')
              element = self.driver.find_element_by_xpath('//*[@id="web-content"]/div/div/div/div[2]/div/div[2]/div[2]/div[2]/div[2]/input')
              element.clear()
-             element.send_keys(u'15874634244')
+             element.send_keys(u'yorphone')
              element = self.driver.find_element_by_xpath('//*[@id="web-content"]/div/div/div/div[2]/div/div[2]/div[2]/div[2]/div[3]/input')
              element.clear()
-             element.send_keys(u'mm112233')
+             element.send_keys(u'yourpasswd')
 
              element = self.driver.find_element_by_xpath('//*[@id="web-content"]/div/div/div/div[2]/div/div[2]/div[2]/div[2]/div[5]')
              element.click()
