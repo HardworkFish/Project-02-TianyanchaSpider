@@ -1,6 +1,6 @@
 # Project-01-TianyanSpider
 use the selenium and phantomjs tools implements crawl tianyan companies datas and store into mongodb.																		
-##### Hisory Version
+#### Hisory Version
 
 + 2018-08-07
   
@@ -8,5 +8,7 @@ use the selenium and phantomjs tools implements crawl tianyan companies datas an
   
   缺点：爬虫速度过快、爬取数据量过大易引起天眼查的反爬策略，常见的为验证码问题以及身份验证问题
  
-  样例数据: ![2018-08-07-data-example]()
-
+  样例数据: 
+           
+    ![2018-08-07-data-example1](./images/2018-08-08_092058.png)
+  
