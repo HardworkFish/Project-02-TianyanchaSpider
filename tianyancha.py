@@ -14,47 +14,50 @@ try:
 except:
     from urllib.parse import urlencode
 
-
-
-ent_fix = [
-'测绘',
-#'地理'
+# 请把关键字放这
+keywords = [
+    '测绘',
+    # '地理'
 ]
 
-
+# 天眼自动登入
 class TianyanchaLogin(object):
 
-     def __init__(self):
-         try:
-             self.driver = None
-             dcap = dict(DesiredCapabilities.PHANTOMJS)
-             dcap["phantomjs.page.settings.userAgent"] = (
+    def __init__(self):
+        try:
+            self.driver = None
+            dcap = dict(DesiredCapabilities.PHANTOMJS)
+            dcap["phantomjs.page.settings.userAgent"] = (
                  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.9; rv:25.0) Gecko/20100101 Firefox/25.0 "
              )
-             self.driver = webdriver.Chrome(executable_path="./chromedriver.exe", desired_capabilities=dcap)
-             self.driver.implicitly_wait(10)
+            self.driver = webdriver.Chrome(executable_path="./chromedriver.exe", desired_capabilities=dcap)
+            self.driver.implicitly_wait(5)
 
-             self.driver.get('https://www.tianyancha.com/login')
-             time.sleep(3.0)
-                                                       # ('//*[@id = "web-content"]/div/div/div/div[2]/div/div[2]/div[2]/div[2]/div[2]/input')
-             element = self.driver.find_element_by_xpath('//*[@id="web-content"]/div/div/div/div[2]/div/div[2]/div[2]/div[2]/div[2]/input')
-             element.clear()
-             element.send_keys(u'yorphone')
-             element = self.driver.find_element_by_xpath('//*[@id="web-content"]/div/div/div/div[2]/div/div[2]/div[2]/div[2]/div[3]/input')
-             element.clear()
-             element.send_keys(u'yourpasswd')
+            self.driver.get('https://www.tianyancha.com/login')
+            time.sleep(2.0)
 
-             element = self.driver.find_element_by_xpath('//*[@id="web-content"]/div/div/div/div[2]/div/div[2]/div[2]/div[2]/div[5]')
-             element.click()
-             time.sleep(10.0)
-         except Exception:
-             print(traceback.format_exc())
-             print('异常退出')
-             if self.driver:
-                 self.driver.close()
+            element = self.driver.find_element_by_xpath('//*[@id="web-content"]/div/div/div/div[2]/div/div[2]'
+                                                        '/div[2]/div[2]/div[2]/input')
+            element.clear()
+            element.send_keys(u'15874634244')
+            element = self.driver.find_element_by_xpath('//*[@id="web-content"]/div/div/div/div[2]/div/div[2]'
+                                                        '/div[2]/div[2]/div[3]/input')
+            element.clear()
+            element.send_keys(u'mm112233')
+
+            element = self.driver.find_element_by_xpath('//*[@id="web-content"]/div/div/div/div[2]/div/div[2]'
+                                                        '/div[2]/div[2]/div[5]')
+            element.click()
+            time.sleep(5.0)
+        except Exception:
+            print(traceback.format_exc())
+            print('异常退出')
+            if self.driver:
+                self.driver.close()
 
 
 
+# 天眼数据爬取
 class TianyanchaClawer(object):
 
     def __init__(self):
@@ -76,85 +79,97 @@ class TianyanchaClawer(object):
         loginer = TianyanchaLogin()
         self.driver = loginer.driver
 
-        self.driver.implicitly_wait(10)
+        self.driver.implicitly_wait(3)
 
         self.mongo_env = os.environ.get('MONGO_ENV')
         if self.mongo_env:
             self.client = pymongo.MongoClient(host="mongodb://127.0.0.1", port=27017)
         else:
             self.client = pymongo.MongoClient()
-        self.db = self.client['db_tyc']
+        self.db = self.client['db_tyc_data']
 
     def run(self):
-        for i, ent in enumerate(ent_fix):
-            time.sleep(3.0)
+        for i, keyword in enumerate(keywords):
+            # time.sleep(3.0)
             try:
-                # 搜索公司
-                data = {'key': ent}
+                # 按关键字搜索公司
+                data = {'key': keyword}
+                # 构造请求链接
                 comp_link = u'https://www.tianyancha.com/search?' + urlencode(data)
                 self.driver.get(comp_link)
-                time.sleep(3)
+                time.sleep(1)
 
                 # 访问公司详细信息的网址
                 soup = BeautifulSoup(self.driver.page_source, 'html.parser')
-                divs = soup.find_all('div', class_='search-result-single')
-                for div in divs:
-                    #print(div)
-                    a = div.find('a')
-                    href = a['href']
-                    print(href)
-                    comp_link = href
-                    self.driver.get(comp_link)
-                    time.sleep(2.0)
+                # 获取页数
+                pages_num = soup.find('a', class_='num -end').get_text()[3: ]
+                print(pages_num)
+                # 用于测试时可以另 pages_num = 2,便于程序调试
 
-                # 从页面提取结构化信息
+                urls_lists = self.save_links_list(pages_num, data)
 
-                    result = self.parse_page(self.driver)
-                    result['url'] = href
-                    pprint(result)
-
-                # 插入到mongodb数据的集合中
-                self.db['db_tyc_collection_result'].insert(result)
-                time.sleep(3.0)
+                print(urls_lists)
+                # 重新构造爬取链接
+                for url in urls_lists:
+                    # comp_link = href
+                    #self.driver.get(url)
+                    # 从页面提取结构化信息
+                    self.singlepage(url)
+                    time.sleep(1.0)
+                # 跑完关闭
+                self.driver.close()
             except Exception:
                 print(traceback.format_exc())
                 continue
         if self.driver:
-            time.sleep(15.0)
+            time.sleep(8.0)
             self.driver.close()
 
-    def singlepage(self):
-        f = open("links0000.txt")
-        for line in f:
-            _link = line.strip()
-            print(_link)
+    # 返回所有链接列表
+    def save_links_list(self, pages_num, data):
+        lists = []
+        # 重新构造爬取链接
+        for num in range(1, pages_num):
+            # 链接列表
+            lists_link = u'https://www.tianyancha.com/search/p' + str(num) + '?' + urlencode(data)
+            self.driver.get(lists_link)
+            time.sleep(1)
+            # 访问公司详细信息的网址
+            soup = BeautifulSoup(self.driver.page_source, 'html.parser')
+            divs = soup.find_all('div', class_='search-result-single')
+            for div in divs:
+                # print(div)
+                a = div.find('a')
+                href = a['href']
+                #print(href)
+                # 加入列表
+                lists.append(href)
+        return lists
 
-       # loginer = TianyanchaLogin()
-       # self.driver = loginer.driver
-
-        #self.driver.implicitly_wait(5)
-        #_link = 'https://www.tianyancha.com/company/3844284'
-        #_link = 'https://www.tianyancha.com/company/824093561'
-
+    # 单页详情页调度
+    #  driver, _link
+    def singlepage(self,  _link):
+        # 如果链接已保存在相应文件，可以去掉该注释
+        #f = open("new_links0000.txt")#new_links0000.txt
+        #for line in f:
+           # _link = line.strip()
+            #print(_link)
+        #time.sleep(2.0)
+           # _link = 'https://www.tianyancha.com/company/3844284'
 
             self.driver.get(_link)
-        #time.sleep(2.0)
             result = {}
             result['url'] = _link
-            result = self.parse_page(self.driver ,_link)
-       # 插入到mongodb数据的集合中
-
+            result = self.parse_page(self.driver, _link)
+            # 插入到mongodb数据的集合中
             pprint(result)
-            self.db['db_tyc_collection_result'].insert(result)
-            time.sleep(3.0)
+            self.db['db_tyc_collection_data'].insert(result)
+            time.sleep(2.0)
 
-
-
+    #中标
     def prase_bit_page(self, driver, num, id):
-        indexes =num
-        company_bits = {}
-        index = 0
-        for i in range(1, indexes):
+        company_bits = []
+        for i in range(1, num):
             bit_url = 'https://www.tianyancha.com/pagination/bid.xhtml?ps=10&pn='+ str(i) +'&id='+ str(id)
            #&id=3844284'
             try:
@@ -163,41 +178,32 @@ class TianyanchaClawer(object):
                 loginer = TianyanchaLogin()
                 self.driver = loginer.driver
                 self.driver.get(bit_url)
-                continue
+                pass
             except:
-                continue
+                pass
 
             bit_soup = BeautifulSoup(driver.page_source, 'lxml', from_encoding='utf-8')
             bits = bit_soup.find_all('td')
-       # print(bits)
-
             for j in range(0, len(bits), 4):
                 try:
-            # company_bits[num]
-                    num = 'index' + str(index)
-                    company_bits[num] = {}
-                    company_bits[num]['index'] = bits[j].get_text()
-                    company_bits[num]['time'] = bits[j + 1].get_text()
-                    company_bits[num]['title'] = bits[j + 2].get_text()
-                    company_bits[num]['onwer'] = bits[j + 3].get_text()
-                    index = index + 1
+                    bit = {}
+                    bit['index'] = bits[j].get_text()
+                    bit['time'] = bits[j + 1].get_text()
+                    bit['title'] = bits[j + 2].get_text()
+                    bit['onwer'] = bits[j + 3].get_text()
+                    company_bits['company_bits'].append(bit)
                 except:
-                    continue
-           # time.sleep(5)
-       # print(company_bits)
-        #driver.close()
+                   pass
+        time.sleep(2)
+        # print(company_bits)
         return company_bits
 
 
    # 软件专利 https://www.tianyancha.com/pagination/patent.xhtml?ps=5&pn=61&id=3844284
     def patent_page(self, driver, num, id):
-        #loginer = TianyanchaLogin()
-        #self.driver = loginer.driver
-        indexes = num
-        company_patents = {}
-        index = 0
+        company_patents = []
        # id = 3844284
-        for i in range(1,int(indexes)):
+        for i in range(1,int(num)):
             patent_url = 'https://www.tianyancha.com/pagination/patent.xhtml?ps=5&pn=' + str(i) + '&id=' + str(id)
        # patent_url = 'https://www.tianyancha.com/pagination/patent.xhtml?ps=5&pn=1&id=3844284'
             try:
@@ -206,92 +212,70 @@ class TianyanchaClawer(object):
                 loginer = TianyanchaLogin()
                 self.driver = loginer.driver
                 self.driver.get(patent_url)
-                continue
+                pass
             except:
-                continue
-           # self.driver.get(patent_url)
+                pass
             patent_soup = BeautifulSoup(driver.page_source, 'lxml', from_encoding='utf-8')
             patents = patent_soup.find_all('td')
-
-            #print(len(patents))
-
-            for j in range(0,len(patents),7):
+            for j in range(0, len(patents), 7):
                 try:
-                    num = 'index' + str(index)
-                    company_patents[num] = {}
-            #print(patents[i+4])
-                    company_patents[num]['index'] = patents[j].get_text()
-                    company_patents[num]['time'] = patents[j + 1].get_text()
-                    company_patents[num]['patent_name'] = patents[j + 2].get_text()
-                    company_patents[num]['apply_number'] = patents[j + 3].get_text()
-                    company_patents[num]['patent_apply'] = patents[j + 4].get_text()
-                    company_patents[num]['patent_type'] = patents[j + 5].get_text()
-                    company_patents[num]['detail'] = patents[j + 6].find('a')['href']
-                    index = index + 1
+                    patent = {}
+                    patent['index'] = patents[j].get_text()
+                    patent['time'] = patents[j + 1].get_text()
+                    patent['patent_name'] = patents[j + 2].get_text()
+                    patent['apply_number'] = patents[j + 3].get_text()
+                    patent['patent_apply'] = patents[j + 4].get_text()
+                    patent['patent_type'] = patents[j + 5].get_text()
+                    patent['detail'] = patents[j + 6].find('a')['href']
+                    company_patents.append(patent)
                 except:
-                    continue
-            #time.sleep(5)
-        #driver.close()
+                    pass
+        time.sleep(2)
+        # print(company_patents)
         return company_patents
 
 # 软件著作权 https://www.tianyancha.com/pagination/copyright.xhtml?ps=5&pn=1&id=3844284
     def copyright_page(self, driver, num, id):
-       # loginer = TianyanchaLogin()
-        #self.driver = loginer.driver
-        #copyright_utl = 'https://www.tianyancha.com/pagination/copyright.xhtml?ps=5&pn=1&id=3844284'
-        indexes = num
-        company_copyright = {}
-        index = 0
-        loginer = TianyanchaLogin()
-        self.driver = loginer.driver
-        for i in range(1, int(indexes)):
+        company_copyright = []
+        for i in range(1, int(num)):
             copyright_url = 'https://www.tianyancha.com/pagination/copyright.xhtml?ps=5&pn=' + str(i) + '&id=' + str(id)
-            #self.driver.get( copyright_utl)
             try:
                 self.driver.get(copyright_url)
             except selenium.common.exceptions:
                 loginer = TianyanchaLogin()
                 self.driver = loginer.driver
                 self.driver.get(copyright_url)
-                continue
+                pass
             except:
-                continue
+                pass
             copyright_soup = BeautifulSoup(driver.page_source, 'lxml', from_encoding='utf-8')
             copyrights = copyright_soup.find_all('td')
 
             for j in range(0, len(copyrights), 8):
                 try:
-                    num = 'index' + str(index)
-                    company_copyright[num] = {}
-            # print(patents[i+4])
-                    company_copyright[num]['index'] = copyrights[j].get_text()
-                    company_copyright[num]['time'] = copyrights[j + 1].get_text()
-                    company_copyright[num]['software_name'] = copyrights[j + 2].get_text()
-                    company_copyright[num]['software_simple_name'] = copyrights[j + 3].get_text()
-                    company_copyright[num]['copyright_number'] = copyrights[j + 4].get_text()
-                    company_copyright[num]['type_number'] = copyrights[j + 5].get_text()
-                    company_copyright[num]['version_number'] = copyrights[j + 6].get_text()
-                    company_copyright[num]['detail'] = copyrights[j + 7].get_text().strip()
-                    index = index + 1
+                    copyright = {}
+                    copyright['index'] = copyrights[j].get_text()
+                    copyright['time'] = copyrights[j + 1].get_text()
+                    copyright['software_name'] = copyrights[j + 2].get_text()
+                    copyright['software_simple_name'] = copyrights[j + 3].get_text()
+                    copyright['copyright_number'] = copyrights[j + 4].get_text()
+                    copyright['type_number'] = copyrights[j + 5].get_text()
+                    copyright['version_number'] = copyrights[j + 6].get_text()
+                    copyright['detail'] = copyrights[j + 7].get_text().strip()
+                    company_copyright.append(copyright)
                 except:
-                    continue
-                #time.sleep(5)
-        driver.close()
+                    pass
+
+        time.sleep(2)
+        # print(company_copyright)
         return company_copyright
 
     def parse_page(self, driver, _link):
 
-        # 划动到最底边，让浏览器加载js脚本并执行
-       # self.driver.execute_script(
-            #"window.scrollTo(0, document.body.scrollHeight);var lenOfPage=document.body.scrollHeight;return lenOfPage;")
-        time.sleep(2)
         result = {}
         result['url'] = _link
         try:
             soup = BeautifulSoup(driver.page_source, 'lxml',from_encoding='utf-8')
-           # print(soup)
-
-
             #basic_info
             temp_string = soup.find('div', class_='content')
             company_name = temp_string.find_all('h1')
@@ -300,42 +284,33 @@ class TianyanchaClawer(object):
 
 
             for name in company_name:
-                result['company_name'] = name.get_text()
-            infos= temp_string.find('div',class_='detail' ).find_all('div', class_="in-block")
+                result['company_name'] = name.get_text().strip()
+            infos = temp_string.find('div', class_='detail').find_all('div', class_="in-block")
 
-            result['company_phone'] = infos[0].get_text() #联系电话
+            result['company_phone'] = infos[0].get_text().split('查看更多') #联系电话
             result['company_email'] = infos[1].get_text().split('查看更多')[0] #联系邮箱
-            result['company_wesite'] = infos[2].get_text() #网址
-            result['company_address'] = infos[3].get_text() #地址
+            result['company_wesite'] = infos[2].get_text().strip() #网址
+            result['company_address'] = infos[3].get_text().strip() #地址
 
             summary = temp_string.find('div', class_='detail').find('div', class_="summary") #简介
-            result['company_summary'] = summary.get_text()
-            
+            result['company_summary'] = summary.get_text().strip()
             block_detail = soup.find('div', class_='data-content').find_all('td')
-            #for dt in block_detail:
-             #   print(dt)
-            #print(block_detail)
-            #注册资本
-            #result['company_money'] =  block_detail[4].find_all('div', title='-')[0].get_text()
-            #注册时间
+
             try:
+                # 注册资本
+                result['company_money'] = block_detail[4].find('text', class_='tyc-num lh24').get_text().strip()
+                # 注册时间
                 company_time = block_detail[6].find('div', title=' ').find('text')
-                result['company_time'] = company_time.get_text()
-                company_situation = block_detail[7].find('div', title='存续')
-                result['company_situation'] = company_situation.get_text()
+                result['company_time'] = company_time.get_text().strip()
+                # 公司状态
+                company_situation = block_detail[7].find('div', class_='num-opening')
+                result['company_situation'] = company_situation.get_text().strip()
+                # 公司法定代表人
                 company_humancompany = soup.find('div', class_='humancompany').find('div', class_='name').find('a')
                 result['company_humancompany'] = company_humancompany['title']
             except:
                 pass
-            #result['company_time'] = company_time.get_text()
-            #公司状态
-            #company_situation = block_detail[7].find('div', title='存续')
-            #result['company_situation'] = company_situation.get_text()
-            #法定代表人
-            # company_humancompany = soup.find('div', class_='humancompany').find('div', class_='name').find('a')
-            # result['company_humancompany'] = company_humancompany['title']
 
-                #print(details)
             try:
                 detail_table2 = soup.find('table' , class_='table -striped-col -border-top-none')
                 details = detail_table2.find_all('td')
@@ -357,8 +332,8 @@ class TianyanchaClawer(object):
             except:
                 pass
 
-            ###资质证书
-            company_certificate ={}
+            # 资质证书
+            company_certificate = []
             try:
                 js1 = "goToPage('nav-main-manageStatus')"
                 driver.execute_script(js1)
@@ -367,22 +342,20 @@ class TianyanchaClawer(object):
                 zizhi = zizhi_soup.select('#nav-main-certificateCount')[0]
                 #资质证书
                 zizhi = zizhi.find_all('div', class_='item')
-                index  = 0
                 for i in zizhi:
-                    num = 'index' + str(index)
-                    company_certificate[num] = i.get_text()
-                    index = index+1
-                    #print(company_certificate)
+                    certificate = i.get_text()
+                    print(certificate)
+                    company_certificate.append(certificate)
             except:
                 pass
 
             result['company_certificate'] = company_certificate
 
             js1 = "goToPage('nav-main-manageStatus')"
-            driver.execute_script(js1)
+            #driver.execute_script(js1)
             bit_soup = BeautifulSoup(driver.page_source, 'lxml', from_encoding='utf-8')
 
-            ###中标
+            # 中标投标信息
             id = result['url']
             id = int(id.split('/')[-1])
 
@@ -391,71 +364,54 @@ class TianyanchaClawer(object):
                 bits_soup = bit_soup.select('#_container_bid')[0]
                 total_nums = bits_soup.find('a', class_='num -end').get_text()[3:]
             except:
-                total_nums = 10
-            total_nums=(int(total_nums)-1)
-            #print(bit_url_id)
-            company_bits = clawer.prase_bit_page(self.driver, total_nums,id)
+                #total_nums = 2
+                pass
+            try:
+                total_nums = (int(total_nums)-1)
+                company_bits = clawer.prase_bit_page(self.driver, total_nums, id)
+                result['company_bits'] = company_bits
+            except:
+                pass
 
 
-            ###专利信息
+            # 专利信息
             id = result['url']
             id = int(id.split('/')[-1])
            # patents_soup = bit_soup.select('#_container_patent')[0]
             try:
                 patents_soup = bit_soup.select('#_container_patent')[0]
                 total_patents_nums = patents_soup.find('a', class_='num -end').get_text()[3:]
+                if total_patents_nums> 30:
+                    total_patents_nums = 30
             except:
-                total_patents_nums = 10
-            total_patents_nums = (int(total_patents_nums) - 1)
-            #print(total_patents_nums)
+                #total_patents_nums = 10
+                pass
+            try:
+                total_patents_nums = (int(total_patents_nums) - 1)
+                company_patents = clawer.patent_page(self.driver, total_patents_nums, id)
+                result['company_patents'] = company_patents
+            except:
+                pass
 
-            company_patents = clawer.patent_page(self.driver, total_patents_nums, id)
-            # print(company_patents)
-
-
-            ### 软件著作权
-            #copyright_soup = bit_soup.select('#_container_copyright')[0]
+            # 软件著作权
             try:
                 copyright_soup = bit_soup.select('#_container_copyright')[0]
                 total_copyright_nums =  copyright_soup.find('a', class_='num -end').get_text()[3:]
+                if total_copyright_nums > 30:
+                    total_copyright_nums = 30
             except:
-                total_copyright_nums = 10
-            total_copyright_nums = (int( total_copyright_nums) - 1)
-            #print(total_copyright_nums)
-            company_copyright = clawer.copyright_page(self.driver, total_copyright_nums, id)
-           # print(company_copyright)
-
-
-            result['company_copyright'] = company_copyright
-            result['company_patents'] = company_patents
-            result['company_bits'] = company_bits
-
-            #翻页
-            # num = 0
-            # for j in range(3):
-            #     bits = bit_soup.select('#_container_bid')[0].find_all('td')
-                # 中标公告
-                #num = 0
-                #for i in range(0,len(bits), 4):
-                 #   #company_bits[num]
-                  #  company_bits[num] = {}
-                 # company_bits[num]['index'] = bits[i].get_text()
-                 #    company_bits[num]['time'] = bits[i+1].get_text()
-                 #    company_bits[num]['title'] = bits[i+2].get_text()
-                 #    company_bits[num]['onwer'] = bits[i+3].get_text()
-                 #    num = num+1
-                # time.sleep(3)
-                #element_bit = self.driver.find_element_by_xpath('//*[@id="_container_bid"]/div/ul/li[12]/a')
-                #driver.execute_script('companyPageChange(2,this)')
-                #element = self.driver.find_element_by_xpath(
-                  #  '//*[@id="web-content"]/div/div/div/div[2]/div/div[2]/div[2]/div[2]/div[2]/input')
-
-                # element_bit.click()
-                # time.sleep(3)
+                pass
+            try:
+                total_copyright_nums = (int(total_copyright_nums) - 1)
+                company_copyright = clawer.copyright_page(self.driver, total_copyright_nums, id)
+                result['company_copyright'] = company_copyright
+            except:
+                pass
 
 
 
-        #driver.close()
+
+
 
         except Exception:
             print(traceback.format_exc())
@@ -465,5 +421,5 @@ class TianyanchaClawer(object):
 if __name__ == "__main__":
 # TianyanchaLogin()
     clawer = TianyanchaClawer()
-    #clawer.run()
-    clawer.singlepage()
+    clawer.run()
+    #clawer.singlepage()
