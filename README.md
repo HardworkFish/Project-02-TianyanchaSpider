@@ -1,6 +1,6 @@
 # Project-02 TianyanSpider
 
-use the selenium and Chrom tools implements crawl tianyan companies datas and store into mongodb.																		
+use the selenium and Chrome tools implements crawl tianyan companie's data and store it into mongodb.																		
 ### Project Description
 
    通过给定的关键字爬取相关公司信息，本项目针对关键字 ‘测绘’、‘地理信息’等进行数据爬取，然后将数据存进 MongoDB。
@@ -17,7 +17,7 @@ chromedriver 镜像地址可查看 [npm.taobao.org](http://npm.taobao.org/mirror
     
 ### Importance
 
-   由于项目采用 selenium、phantomjs，请注意版本的匹配。天眼搜索查询普通用户仅支持 100家，VIP用户支持 5000 家。详情页大部分信息则不受 VIP限制。
+   由于项目采用 selenium、Chrome，请注意 Chrome 与 Chromedriver 的版本匹配问题。天眼搜索查询普通用户仅支持 100 家，VIP用户支持 5000 家。详情页大部分信息则不受 VIP限制。
 
 #### Hisory Version
 
