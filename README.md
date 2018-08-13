@@ -8,18 +8,25 @@ use the selenium and Chrom tools implements crawl tianyan companies datas and st
 
 ### Environment
 	
-    + Python3.6.3
-    + Selenium 3.8.0
-    + Chromedriver V2.41
-    + Chrome 版本 67.0.3396.99
++ Python3.6.3
++ Selenium 3.8.0
++ Chromedriver V2.41
++ Chrome 版本 67.0.3396.99
 
-    chromedriver 镜像地址可查看 [npm.taobao.org](http://npm.taobao.org/mirrors/chromedriver/)
+chromedriver 镜像地址可查看 [npm.taobao.org](http://npm.taobao.org/mirrors/chromedriver/)
     
 ### Importance
 
    由于项目采用 selenium、phantomjs，请注意版本的匹配。天眼搜索查询普通用户仅支持 100家，VIP用户支持 5000 家。详情页大部分信息则不受 VIP限制。
 
 #### Hisory Version
+
++ 2018-08-13
+
+	1、修改数据结构存储格式
+	2、完善链接列表的获取
+	3、将数据进行了轻微的清理
+	4、调整爬取速度
 
 + 2018-08-07
   
