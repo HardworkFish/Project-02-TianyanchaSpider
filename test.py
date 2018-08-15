@@ -1,0 +1,17 @@
+#!/usr/bin/env python3.6
+# -*- coding:utf-8 -*-
+
+import time
+
+from selenium import webdriver
+from bs4 import BeautifulSoup
+
+import tyc_login
+import tyc_urls_crawler
+
+test = tyc_login.TianyanchaLogin('15602302053', 'MM112233')
+
+url = tyc_urls_crawler.TianyanchaUrlsCrawler(test.driver, ["腾讯"])
+
+url.crawl_urls()
+
