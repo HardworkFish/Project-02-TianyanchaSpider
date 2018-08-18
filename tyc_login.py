@@ -9,9 +9,14 @@ from selenium import webdriver
 
 # Login
 class TianyanchaLogin:
-
+    """
+    登录入口，返回 driver
+    """
     def __init__(self, phone, password):
-
+        """
+        :param phone: str
+        :param password: str
+        """
         try:
             self.driver = webdriver.Chrome()
             self.driver.get('https://www.tianyancha.com/login')
