@@ -29,7 +29,7 @@ class TianyanchaLogin:
             login_button.click()
 
             sleep(3)
-        except:
+        except (AttributeError, TypeError):
             if self.driver:
                 self.driver.close()
             raise

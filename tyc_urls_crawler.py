@@ -34,6 +34,8 @@ class TianyanchaUrlsCrawler:
                 for link in links:
                     self.url_list.append(link['href'])
 
+        return self.url_list
+
     def get_page_num(self, keyword):
         """
         爬取页数
@@ -49,7 +51,7 @@ class TianyanchaUrlsCrawler:
             num_end = soup.find('a', class_="num -end")
             return next(iter(num_end))[3:]
 
-        except:
+        except (AttributeError, TypeError):
             if self.driver:
                 self.driver.close()
             raise
