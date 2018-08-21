@@ -7,14 +7,16 @@ import re
 from time import sleep
 
 from bs4 import BeautifulSoup
+from selenium.webdriver.common.keys import Keys
 
 
 class TianyanchaSinglePageClawer:
     """
     详细页爬虫
     """
-    def __init__(self, driver):
-        self.driver = driver
+    def __init__(self, loginer):
+        self.loginer = loginer
+        self.driver = self.loginer.driver
 
     def crawl_single_page(self, url):
         """
@@ -38,6 +40,7 @@ class TianyanchaSinglePageClawer:
         self.crawl_bits(result, bits_pages_num, result['company_id'])
         self.crawl_patents(result, patents_pages_num, result['company_id'])
         self.crawl_copyrights(result, copyrights_pages_num, result['company_id'])
+        pprint(result)
         return result
 
     def crawl_certificates(self, result, pages_num, company_id):
@@ -58,8 +61,6 @@ class TianyanchaSinglePageClawer:
             for tr in trs[1:]:
                 result['company_certificate'].append(tr.findAll('td')[1].getText())
 
-            pprint(result['company_certificate'])
-
     def crawl_bits(self, result, pages_num, company_id):
         """
         :param result: dict
@@ -70,8 +71,8 @@ class TianyanchaSinglePageClawer:
         url_fmt = "https://www.tianyancha.com/pagination/bid.xhtml?ps=10&pn={page}&id={c_id}"
         for page in range(1, pages_num + 1):
             url = url_fmt.format(page=page, c_id=company_id)
-            self.driver.get(url)
-            sleep(randint(100, 300)/100)
+            self.loginer.try_get(url)
+            sleep(randint(100, 500)/100)
 
             soup = BeautifulSoup(self.driver.page_source, 'lxml')
             trs = soup.findAll('tr')
@@ -81,12 +82,11 @@ class TianyanchaSinglePageClawer:
                     tds = tr.findAll('td')
                     bit['index'] = tds[0].getText()
                     bit['time'] = tds[1].getText()
-                    bit['title'] = next(tds[2].descendants)
+                    bit['title'] = next(tds[2].descendants).getText()
                     bit['owner'] = next(tds[3].descendants)
                     result['company_bits'].append(bit)
                 except (AttributeError, IndexError):
                     pass
-        pprint(result['company_bits'])
 
     def crawl_patents(self, result, pages_num, company_id):
         """
@@ -98,8 +98,8 @@ class TianyanchaSinglePageClawer:
         url_fmt = "https://www.tianyancha.com/pagination/patent.xhtml?ps=5&pn={page}&id={c_id}"
         for page in range(1, pages_num + 1):
             url = url_fmt.format(page=page, c_id=company_id)
-            self.driver.get(url)
-            sleep(randint(100, 300)/100)
+            self.loginer.try_get(url)
+            sleep(randint(100, 500)/100)
 
             soup = BeautifulSoup(self.driver.page_source, 'lxml')
             trs = soup.findAll('tr')
@@ -114,7 +114,7 @@ class TianyanchaSinglePageClawer:
                     patent['patent_apply'] = tds[4].getText()
                     patent['patent_type'] = tds[5].getText()
                     patent['detail'] = tds[6].find('a')['href']
-                    result['company_tatents'].append(patent)
+                    result['company_patents'].append(patent)
                 except (AttributeError, TypeError):
                     pass
 
@@ -128,8 +128,8 @@ class TianyanchaSinglePageClawer:
         url_fmt = "https://www.tianyancha.com/pagination/copyright.xhtml?ps=5&pn={page}&id={c_id}"
         for page in range(1, pages_num + 1):
             url = url_fmt.format(page=page, c_id=company_id)
-            self.driver.get(url)
-            sleep(randint(100, 300) / 100)
+            self.loginer.try_get(url)
+            sleep(randint(100, 500) / 100)
 
             soup = BeautifulSoup(self.driver.page_source, 'lxml')
             trs = soup.findAll('tr')
@@ -160,7 +160,11 @@ class TianyanchaSinglePageClawer:
         result['company_phone'] = details[0].find('script').getText()
         result['company_email'] = details[1].find('script').getText()
         result['company_website'] = details[2].find('a', class_='company-link').getText()
-        result['company_address'] = details[3].find('script').getText()
+        address = details[3].find('script')
+        if address:
+            result['company_address'] = address.getText()
+        else:
+            result['company_address'] = details[3].find('span').getText()
         result['company_summary'] = soup.find('script', id='company_base_info_detail').getText().strip()
         block_detail = soup.find('div', class_='data-content').find_all('td')
 
@@ -199,7 +203,6 @@ class TianyanchaSinglePageClawer:
             result['company_rate'] = details[32].get_text()
         except (AttributeError, TypeError, IndexError):
             pass
-        pprint(result)
 
 
 def get_page_num(soup, data_type):

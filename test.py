@@ -1,20 +1,37 @@
 #!/usr/bin/env python3.6
 # -*- coding:utf-8 -*-
 
-import tyc_login
-import tyc_urls_crawler
-import tyc_singlepage_crawler
+"""
+导入三个包：
+tyc_login：登录模块；
+tyc_urls_crawler：链接爬取模块；
+tyc_singlepage_crawler：详细页爬取模块。
+"""
+
+from tyc_spider import tyc_login
+from tyc_spider import tyc_urls_crawler
+from tyc_spider import tyc_singlepage_crawler
 
 
-test = tyc_login.TianyanchaLogin('15663073264', 'mm112233')
+# 登录爬虫两个参数，电话号码跟密码
+PHONE = 'phone'
+PASSWORD = 'password'
 
-url = tyc_urls_crawler.TianyanchaUrlsCrawler(test.driver, ["地理"])
+# 关键词列表
+KEYWORDS = ['航空仿真摄影']
 
-urls = url.crawl_urls()
+# 登录
+login_driver = tyc_login.TianyanchaLogin(PHONE, PASSWORD)
 
-single_page_crawl = tyc_singlepage_crawler.TianyanchaSinglePageClawer(test.driver)
+# 初始化 URL 爬虫
+url_crawler = tyc_urls_crawler.TianyanchaUrlsCrawler(login_driver.driver, KEYWORDS)
 
+# 爬取返回 URL 列表
+urls = url_crawler.crawl_urls()
+
+# 初始化详细页爬虫
+single_page_crawl = tyc_singlepage_crawler.TianyanchaSinglePageClawer(login_driver)
+
+# 爬取信息，返回字典 result，自行对其处理
 for link in urls:
-    single_page_crawl.crawl_single_page(link)
-
-
+    result = single_page_crawl.crawl_single_page(link)

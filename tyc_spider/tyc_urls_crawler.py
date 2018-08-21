@@ -18,13 +18,13 @@ class TianyanchaUrlsCrawler:
         """
         self.driver = driver
         self.keywords = keywords
-        self.url_fmt = 'https://www.tianyancha.com/search/p{page_num}?{keyword}'
+        self.url_fmt = 'https://www.tianyancha.com/search/p{page_num}?key={keyword}'
         self.url_list = []
 
     def crawl_urls(self):
         for keyword in self.keywords:
             pages = self.get_page_num(keyword)
-            for page_num in range(1, int(pages)):
+            for page_num in range(1, int(pages)+1):
                 url = self.url_fmt.format(page_num=page_num, keyword=keyword)
                 self.driver.get(url)
                 sleep(randint(300, 600)/100)
@@ -48,8 +48,9 @@ class TianyanchaUrlsCrawler:
             self.driver.get(url)
             sleep(5)
             soup = BeautifulSoup(self.driver.page_source, 'lxml')
-            num_end = soup.find('a', class_="num -end")
-            return next(iter(num_end))[3:]
+            page_ul = soup.find('ul', class_="pagination")
+            page_links = page_ul.findAll('a')
+            return page_links[-2].getText()
 
         except (AttributeError, TypeError):
             if self.driver:
