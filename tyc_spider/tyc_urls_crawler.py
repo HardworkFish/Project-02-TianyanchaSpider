@@ -11,38 +11,53 @@ class TianyanchaUrlsCrawler:
     """
     爬详细页链接，传入登录后的 driver 以及关键字
     """
-    def __init__(self, driver, keywords):
+    def __init__(self, driver, keywords, status=None):
         """
         :param driver: selenium webdriver
         :param keywords: str
         """
         self.driver = driver
         self.keywords = keywords
-        self.url_fmt = 'https://www.tianyancha.com/search/p{page_num}?key={keyword}'
+        self.status = []
+        if '在业' in status:
+            self.status.append('1')
+        if '存续' in status:
+            self.status.append('2')
+        if '吊销' in status:
+            self.status.append('3')
+        if '注销' in status:
+            self.status.append('4')
+        if '迁出' in status:
+            self.status.append('5')
+        if not status:
+            self.status = ['1', '2', '3', '4', '5']
+        print(self.status)
+        self.url_fmt = 'https://www.tianyancha.com/search/os{status}/p{page_num}?key={keyword}'
         self.url_list = []
 
     def crawl_urls(self):
         for keyword in self.keywords:
-            pages = self.get_page_num(keyword)
-            for page_num in range(1, int(pages)+1):
-                url = self.url_fmt.format(page_num=page_num, keyword=keyword)
-                self.driver.get(url)
-                sleep(randint(300, 600)/100)
+            for status in self.status:
+                pages = self.get_page_num(keyword, status)
+                for page_num in range(1, int(pages)+1):
+                    url = self.url_fmt.format(page_num=page_num, keyword=keyword, status=status)
+                    self.driver.get(url)
+                    sleep(randint(300, 600)/100)
 
-                soup = BeautifulSoup(self.driver.page_source, 'lxml')
-                links = soup.findAll('a', class_="name ")
-                for link in links:
-                    self.url_list.append(link['href'])
+                    soup = BeautifulSoup(self.driver.page_source, 'lxml')
+                    links = soup.findAll('a', class_="name ")
+                    for link in links:
+                        self.url_list.append(link['href'])
 
         return self.url_list
 
-    def get_page_num(self, keyword):
+    def get_page_num(self, keyword, status):
         """
         爬取页数
         :param keyword: str
         :return: int
         """
-        url = self.url_fmt.format(page_num=1, keyword=keyword)
+        url = self.url_fmt.format(page_num=1, keyword=keyword, status=status)
 
         try:
             self.driver.get(url)

@@ -7,7 +7,6 @@ import re
 from time import sleep
 
 from bs4 import BeautifulSoup
-from selenium.webdriver.common.keys import Keys
 
 
 class TianyanchaSinglePageClawer:
@@ -72,7 +71,7 @@ class TianyanchaSinglePageClawer:
         for page in range(1, pages_num + 1):
             url = url_fmt.format(page=page, c_id=company_id)
             self.loginer.try_get(url)
-            sleep(randint(100, 500)/100)
+            sleep(randint(100, 300)/100)
 
             soup = BeautifulSoup(self.driver.page_source, 'lxml')
             trs = soup.findAll('tr')
@@ -99,7 +98,7 @@ class TianyanchaSinglePageClawer:
         for page in range(1, pages_num + 1):
             url = url_fmt.format(page=page, c_id=company_id)
             self.loginer.try_get(url)
-            sleep(randint(100, 500)/100)
+            sleep(randint(100, 300)/100)
 
             soup = BeautifulSoup(self.driver.page_source, 'lxml')
             trs = soup.findAll('tr')
@@ -129,7 +128,7 @@ class TianyanchaSinglePageClawer:
         for page in range(1, pages_num + 1):
             url = url_fmt.format(page=page, c_id=company_id)
             self.loginer.try_get(url)
-            sleep(randint(100, 500) / 100)
+            sleep(randint(100, 300) / 100)
 
             soup = BeautifulSoup(self.driver.page_source, 'lxml')
             trs = soup.findAll('tr')
@@ -157,14 +156,23 @@ class TianyanchaSinglePageClawer:
         result['company_name'] = soup.find('h1', class_="name").getText()
 
         details = soup.find('div', class_='detail').find_all('div', class_='in-block')
-        result['company_phone'] = details[0].find('script').getText()
-        result['company_email'] = details[1].find('script').getText()
-        result['company_website'] = details[2].find('a', class_='company-link').getText()
+        try:
+            result['company_phone'] = details[0].find('script').getText()
+        except AttributeError:
+            result['company_phone'] = '暂无消息'
+        try:
+            result['company_email'] = details[1].find('script').getText()
+        except AttributeError:
+            result['company_email'] = '暂无消息'
+        try:
+            result['company_website'] = details[2].find('a', class_='company-link').getText()
+        except AttributeError:
+            result['company_website'] = '暂无消息'
         address = details[3].find('script')
         if address:
             result['company_address'] = address.getText()
         else:
-            result['company_address'] = details[3].find('span').getText()
+            result['company_address'] = details[3].getText().lstrip('地址：')
         result['company_summary'] = soup.find('script', id='company_base_info_detail').getText().strip()
         block_detail = soup.find('div', class_='data-content').find_all('td')
 
@@ -200,9 +208,10 @@ class TianyanchaSinglePageClawer:
             # 注册地址
             result['company_register_address'] = details[30].get_text()
             # 经营范围
-            result['company_rate'] = details[32].get_text()
+            result['company_rate'] = soup.find('span', class_='js-full-container hidden').getText()
         except (AttributeError, TypeError, IndexError):
             pass
+        pprint(result)
 
 
 def get_page_num(soup, data_type):

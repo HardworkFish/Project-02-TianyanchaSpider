@@ -45,7 +45,6 @@ class TianyanchaLogin:
         :param url: str
         """
         self.driver.get(url)
-        print(self.driver.page_source.find('Unauthorized'))
         if self.driver.page_source.find('Unauthorized') != -1:
             self.driver.close()
             self.login()
