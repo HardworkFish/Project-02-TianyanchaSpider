@@ -28,8 +28,15 @@ STATUS = ['在业', '存续']
 # 登录
 login_driver = tyc_login.TianyanchaLogin(PHONE, PASSWORD)
 
+"""
+爬取省份列表
+省份缩写可以查看天眼查 url 格式
+"""
+
+PROVINCE = ['gd']
+
 # 初始化 URL 爬虫
-url_crawler = tyc_urls_crawler.TianyanchaUrlsCrawler(login_driver.driver, KEYWORDS, STATUS)
+url_crawler = tyc_urls_crawler.TianyanchaUrlsCrawler(login_driver.driver, KEYWORDS, STATUS, PROVINCE)
 
 # 爬取返回 URL 列表
 urls = []
