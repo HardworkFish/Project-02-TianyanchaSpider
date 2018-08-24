@@ -32,7 +32,7 @@ class TianyanchaUrlsCrawler:
         if not status:
             self.status = ['1', '2', '3', '4', '5']
         print(self.status)
-        self.url_fmt = 'https://www.tianyancha.com/search/os{status}/p{page_num}?key={keyword}'
+        self.url_fmt = 'https://www.tianyancha.com/search/os{status}/p{page_num}?key={keyword}&searchType=company'
         self.url_list = []
 
     def crawl_urls(self):
@@ -46,10 +46,9 @@ class TianyanchaUrlsCrawler:
 
                     soup = BeautifulSoup(self.driver.page_source, 'lxml')
                     links = soup.findAll('a', class_="name ")
+                    print(keyword, page_num)
                     for link in links:
-                        self.url_list.append(link['href'])
-
-        return self.url_list
+                        yield link['href']
 
     def get_page_num(self, keyword, status):
         """
@@ -65,7 +64,7 @@ class TianyanchaUrlsCrawler:
             soup = BeautifulSoup(self.driver.page_source, 'lxml')
             page_ul = soup.find('ul', class_="pagination")
             page_links = page_ul.findAll('a')
-            return page_links[-2].getText()
+            return page_links[-2].getText().lstrip('.')
 
         except (AttributeError, TypeError):
             if self.driver:

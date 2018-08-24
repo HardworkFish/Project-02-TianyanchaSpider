@@ -20,7 +20,7 @@ PHONE = 'phone'
 PASSWORD = 'password'
 
 # 关键词列表
-KEYWORDS = ['航空仿真摄影']
+KEYWORDS = ['地理']
 
 # 状态列表
 STATUS = ['在业', '存续']
@@ -32,7 +32,10 @@ login_driver = tyc_login.TianyanchaLogin(PHONE, PASSWORD)
 url_crawler = tyc_urls_crawler.TianyanchaUrlsCrawler(login_driver.driver, KEYWORDS, STATUS)
 
 # 爬取返回 URL 列表
-urls = url_crawler.crawl_urls()
+urls = []
+for url in  url_crawler.crawl_urls():
+    print(url)
+    urls.append(url)
 
 
 # 初始化详细页爬虫
@@ -40,5 +43,5 @@ single_page_crawl = tyc_singlepage_crawler.TianyanchaSinglePageClawer(login_driv
 
 # 爬取信息，返回字典 result，自行对其处理
 for link in urls:
-   result = single_page_crawl.crawl_single_page(link)
-   pprint(result)
+    result = single_page_crawl.crawl_single_page(link)
+    pprint(result)
