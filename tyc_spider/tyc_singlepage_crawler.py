@@ -53,7 +53,7 @@ class TianyanchaSinglePageClawer:
         for page in range(1, pages_num + 1):
             url = url_fmt.format(page=page, c_id=company_id)
             self.driver.get(url)
-            sleep(randint(100, 300)/100)
+            sleep(randint(300, 500)/100)
 
             soup = BeautifulSoup(self.driver.page_source, 'lxml')
             trs = soup.findAll('tr')
@@ -232,4 +232,7 @@ def get_page_num(soup, data_type):
         else:
             return int(pages[-2].get_text().lstrip('.'))
     except AttributeError:
-        return 1
+        if data_type == "certifdicate":
+            return 1
+        else:
+            return 0
