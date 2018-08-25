@@ -232,7 +232,7 @@ def get_page_num(soup, data_type):
         else:
             return int(pages[-2].get_text().lstrip('.'))
     except AttributeError:
-        if data_type = "certifdicate":
+        if data_type == "certifdicate":
             return 1
         else:
             return 0
