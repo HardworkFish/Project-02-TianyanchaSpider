@@ -173,7 +173,10 @@ class TianyanchaSinglePageClawer:
             result['company_address'] = address.getText()
         else:
             result['company_address'] = details[3].getText().lstrip('地址：')
-        result['company_summary'] = soup.find('script', id='company_base_info_detail').getText().strip()
+         try:
+            result['company_summary'] = soup.find('script', id='company_base_info_detail').getText().strip()
+        except AttributeError:
+            result['company_sumary'] = '暂无消息'
         block_detail = soup.find('div', class_='data-content').find_all('td')
 
         try:
