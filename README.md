@@ -18,7 +18,7 @@ chromedriver 镜像地址可查看 [npm.taobao.org](http://npm.taobao.org/mirror
     
 ### Importance
 
-由于项目采用 selenium、Chrome，请注意 Chrome 与 Chromedriver 的问题。并把 Chromedriver 加入 PATH。版本匹配问天眼搜索查询普通用户仅支持 100 家，VIP用户支持 5000 家。详情页大部分信息则不受 VIP限制。
+由于项目采用 selenium、Chrome，请注意 Chrome 与 Chromedriver 版本匹配的问题。并把 Chromedriver 加入 PATH。天眼查搜索查询普通用户仅支持 100 家，VIP用户支持 5000 家。详情页大部分信息则不受 VIP限制。
 
 ### Usage
 
@@ -124,7 +124,7 @@ for link in urls:
 	4. 调整爬取速度
 
 + 2018-08-07
-  
+
   实现：公司基本信息包括，网址、注册时间、注册地点、法定代表人、经营范围、公司规模、公司专利、软件著作权、招标等信息
   
   缺点：爬虫速度过快、爬取数据量过大易引起天眼查的反爬策略，常见的为验证码问题以及账号登入问题。由于请求的数据多达2万条，总体爬虫效率较低，爬虫速度待改进。
